@@ -1,5 +1,13 @@
 version: '2'
 
+networks:
+    default:
+        driver: bridge
+        ipam:
+            driver: default
+            config:
+                - subnet: 172.80.171.0/24
+                  gateway: 172.80.171.1
 services:
 
   elasticsearch:
@@ -9,13 +17,12 @@ services:
         ELK_VERSION: $ELK_VERSION
     volumes:
       - ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+      - ./elasticsearch/data:/var/lib/elasticsearch
     ports:
       - "9200:9200"
       - "9300:9300"
     environment:
       ES_JAVA_OPTS: "-Xmx256m -Xms256m"
-    networks:
-      - elk
 
   logstash:
     build:
@@ -28,10 +35,9 @@ services:
     ports:
       - "5000:5000"
       - "9600:9600"
+      - "5959:5959"
     environment:
       LS_JAVA_OPTS: "-Xmx256m -Xms256m"
-    networks:
-      - elk
     depends_on:
       - elasticsearch
 
@@ -44,12 +50,6 @@ services:
       - ./kibana/config/:/usr/share/kibana/config:ro
     ports:
       - "5601:5601"
-    networks:
-      - elk
     depends_on:
       - elasticsearch
 
-networks:
-
-  elk:
-    driver: bridge
